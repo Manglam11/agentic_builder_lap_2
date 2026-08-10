@@ -1,0 +1,9 @@
+[project]
+name = "agentic-track"
+version = "0.1.0"
+description = "Lap 2 — Agentic Builder track (practice + capstone)"
+requires-python = ">=3.12"
+dependencies = [
+    "groq>=1.6.0",
+    "python-dotenv>=1.2.2",
+]
