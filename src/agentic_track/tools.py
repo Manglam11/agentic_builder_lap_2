@@ -1,15 +1,25 @@
-"""The agent's tools + the dispatch registry that maps names to functions."""
+"""The agent's tools, exposed as an MCP server.
+
+Each @mcp.tool function's type hints become its input schema and its
+docstring becomes its description — FastMCP generates both for the model.
+"""
+
+from fastmcp import FastMCP
+
+mcp = FastMCP("agentic-track-tools")
 
 
-def calculator(expression):
-    return str(eval(expression))
+@mcp.tool
+def calculator(expression: str) -> str:
+    """Evaluate a math expression and return the result."""
+    return str(eval(expression))  # eval wart — tracked for M7 guardrails
 
 
-def word_count(text):
+@mcp.tool
+def word_count(text: str) -> str:
+    """Count the number of words in a piece of text."""
     return str(len(text.split()))
 
 
-TOOLS = {
-    "calculator": calculator,
-    "word_count": word_count,
-}
+if __name__ == "__main__":
+    mcp.run()
