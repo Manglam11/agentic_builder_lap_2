@@ -1,10 +1,12 @@
-"""The LLM boundary — the single Groq call the agent uses to think."""
+"""The LLM boundary — Groq to think, Gemini to embed."""
 
 from dotenv import load_dotenv
+from google import genai
 from groq import Groq
 
 load_dotenv()
 client = Groq()
+gemini = genai.Client()  # GEMINI_API_KEY from .env
 
 
 def chat(messages, tools):
@@ -16,3 +18,8 @@ def chat(messages, tools):
         temperature=0,
     )
     return resp.choices[0].message
+
+
+def embed(text):
+    r = gemini.models.embed_content(model="gemini-embedding-001", contents=text)
+    return r.embeddings[0].values
