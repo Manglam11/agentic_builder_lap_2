@@ -1,33 +1,47 @@
-"""The agent loop — wires prompt + llm + tools + parsing into one reusable ReAct agent."""
+"""The agent loop — native tool-calling over MCP.
 
-from agentic_track.prompts import SYSTEM_PROMPT
+Same ReAct control loop as Module 1, but the regex parser is gone and the
+tools live behind an MCP server instead of a local dict.
+"""
+
+import asyncio
+import json
+
 from agentic_track.llm import chat
-from agentic_track.tools import TOOLS
-from agentic_track.parsing import parse_action
+from agentic_track.mcp_bridge import load_tools_from_mcp, mcp_client
+from agentic_track.prompts import SYSTEM_PROMPT
 
 
-def run_agent(question, max_steps=5):
+async def run_agent(question, max_steps=5):
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": question},
     ]
-    for step in range(max_steps):
-        resp = chat(messages)
-        messages.append({"role": "assistant", "content": resp})
-
-        if "Final Answer:" in resp:
-            return resp.split("Final Answer:")[-1].strip()
-
-        tool_name, tool_input = parse_action(resp)
-        if tool_name in TOOLS:
-            answer = TOOLS[tool_name](tool_input)
-        else:
-            answer = f"Error: unknown tool name '{tool_name}'"
-
-        messages.append({"role": "user", "content": f"Observation: {answer}"})
-
+    async with mcp_client:
+        tools = await load_tools_from_mcp(mcp_client)
+        for step in range(max_steps):
+            msg = chat(messages, tools)
+            if not msg.tool_calls:
+                return msg.content
+            messages.append(msg)
+            for tc in msg.tool_calls:
+                args = json.loads(tc.function.arguments)
+                result = await mcp_client.call_tool(tc.function.name, args)
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": str(result.data),
+                    }
+                )
     return "Stopped: hit max steps without final answer."
 
 
 if __name__ == "__main__":
-    print(run_agent("What is 47 * 89, and how many words are in 'the agent loop is beating'?"))
+    print(
+        asyncio.run(
+            run_agent(
+                "What is 47 * 89, and how many words are in 'the agent loop is beating'?"
+            )
+        )
+    )
