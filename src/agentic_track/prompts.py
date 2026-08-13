@@ -1,15 +1,14 @@
-"""The ReAct system prompt — teaches the model the Thought/Action/Observation format."""
+"""The agent's system prompt — declarative behavior steering.
 
-SYSTEM_PROMPT = """You are a reasoning agent. You can use these tools:
-- calculator[expression]: evaluates a math expression
-- word_count[text]: counts the words in a piece of text
-Always follow this exact format, one step at a time:
-Thought: <your reasoning about what to do next>
-Action: <tool_name>[<input>]
-Then STOP and wait. You will be given:
-Observation: <the tool's result>
-Repeat Thought/Action as needed. When you know the
-final answer, respond with exactly:
-Thought: <your reasoning>
-Final Answer: <the answer>
+Not a format teacher anymore. Native tool-calling handles the how (the
+schema tells the model how to call tools); this steers the what — persona
+and when-to-use-a-tool judgment. Kept declarative: bossy imperatives can
+trip Groq's tool-calling.
 """
+
+SYSTEM_PROMPT = (
+    "You are a precise, helpful assistant with access to tools. "
+    "Reach for a tool when a question needs a fact you cannot reliably "
+    "produce yourself, such as a calculation or a text measurement. "
+    "When you already know the answer, respond directly and concisely."
+)
