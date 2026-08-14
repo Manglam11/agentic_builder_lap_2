@@ -1,6 +1,7 @@
-import re, os
-from groq import Groq
+import re
+
 from dotenv import load_dotenv
+from groq import Groq
 
 load_dotenv()
 # 01. the tool registry
@@ -33,7 +34,7 @@ load_dotenv()
 #     return str(int(x) * 2)
 
 # TOOLS = {
-#     "add_one": add_one, 
+#     "add_one": add_one,
 #     "double": double
 #     }
 
@@ -50,7 +51,6 @@ load_dotenv()
 # print("result 2", result_2)
 
 # 03. parse the action
-
 
 
 # reply = "Thought: I should multiply.\nAction: calculator[12 * 8]"
@@ -112,7 +112,6 @@ load_dotenv()
 # 07. react system prompt
 
 
-
 client = Groq()
 
 SYSTEM_PROMPT = """You are a reasoning agent. You can use these tools:
@@ -129,36 +128,41 @@ Thought: <your reasoning>
 Final Answer: <the answer>
 """
 
+
 def chat(messages):
     resp = client.chat.completions.create(
-        model= "llama-3.3-70b-versatile",
-        messages=messages,
-        temperature=0
+        model="llama-3.3-70b-versatile", messages=messages, temperature=0
     )
     return resp.choices[0].message.content
 
-def parse_action(text:str):
-    match = re.search(r"Action:\s*(\w+)\[(.*)\]",text)
+
+def parse_action(text: str):
+    match = re.search(r"Action:\s*(\w+)\[(.*)\]", text)
     if not match:
         return None, None
     return match.group(1), match.group(2)
 
+
 def calculator(expression):
     return str(eval(expression))
+
 
 def word_count(text):
     return str(len(text.split()))
 
+
 TOOLS = {"calculator": calculator, "word_count": word_count}
 
-messages = [{"role":"system", "content": SYSTEM_PROMPT},
-            ]
+messages = [
+    {"role": "system", "content": SYSTEM_PROMPT},
+]
 
-def run_agent(question, max_steps = 5):
-    messages.append({"role":"user", "content":question})
+
+def run_agent(question, max_steps=5):
+    messages.append({"role": "user", "content": question})
     for _ in range(max_steps):
         resp = chat(messages)
-        messages.append({"role":"assistant", "content": resp})
+        messages.append({"role": "assistant", "content": resp})
         if "Final Answer:" in resp:
             return resp.split("Final Answer:")[-1].strip()
 
@@ -168,8 +172,10 @@ def run_agent(question, max_steps = 5):
         else:
             answer = f"Error: unknown tool name '{tool_name}'"
 
-        messages.append({"role":"user", "content":f"Observation: {answer}"})
+        messages.append({"role": "user", "content": f"Observation: {answer}"})
     return "Stopped: hit max rate without final answer."
 
-print(run_agent("What is 47 * 89, and how many words are in 'the agent loop is beating'?"))
-        
+
+print(
+    run_agent("What is 47 * 89, and how many words are in 'the agent loop is beating'?")
+)
