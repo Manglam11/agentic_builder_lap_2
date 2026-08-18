@@ -9,9 +9,9 @@ client = Groq()
 gemini = genai.Client()  # GEMINI_API_KEY from .env
 
 
-def chat(messages, tools):
+def chat(messages, tools=None):
     resp = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=messages,
         tools=tools,
         tool_choice="auto",
